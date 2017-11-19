@@ -1,0 +1,3 @@
+[submodule "Libraries/SamSeifert.Utilities"]
+	path = Libraries/SamSeifert.Utilities
+	url = https://github.com/SnowmanTackler/SamSeifert.Utilities.git
