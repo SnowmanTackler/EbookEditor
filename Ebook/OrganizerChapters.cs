@@ -47,7 +47,7 @@ namespace Ebook
 
         public void Clear()
         {
-            foreach (var mf in this._Content) mf._MF.Clear();
+            foreach (var mf in this._Content) mf.Clear();
             this._Content = new ManifestFileNavigation[0];
             this.lastRadioButton = null;
             this.lastRadioButtonSection = -1;
@@ -57,7 +57,7 @@ namespace Ebook
         {
             foreach (var mf in this._Content)
             {
-                mf._MF.Checked = true;
+                mf.Checked = true;
             }
         }
 
@@ -74,7 +74,7 @@ namespace Ebook
                 this.lastRadioButton = rb;
                 this.lastRadioButtonSection = par._Section;
 
-                this._WebBrowser.Navigate(this._Content[par._Section]._MF._StringPathFull);
+                this._WebBrowser.Navigate(this._Content[par._Section]._StringPathFull);
             }
         }
 

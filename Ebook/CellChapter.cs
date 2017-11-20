@@ -18,7 +18,6 @@ namespace Ebook
 
 
         private ManifestFileNavigation _Parent = null;
-        private ManifestFile _ParentMF { get { return this._Parent._MF; } }
 
         public CellChapter()
         {
@@ -27,19 +26,20 @@ namespace Ebook
 
         ~CellChapter()
         {
-//            this._Parent?.ForgetChild(this);
+            this._Parent?.ForgetChild(this);
         }
 
         public void setup(ManifestFileNavigation mf, int section)
         {
+            this._Parent?.ForgetChild(this);
             this._Parent = mf;
             this._Section = section;
 
-            this.lPath.Text = this._ParentMF._StringPath;
-            this.rbDisplayChapter.Enabled = this._ParentMF._BoolFileExists;
+            this.lPath.Text = this._Parent._StringPath;
+            this.rbDisplayChapter.Enabled = this._Parent._BoolFileExists;
 
-            this._ParentMF._Child = this;
-            this._ParentMF.UpdateLinkedGuiElements();
+            this._Parent._Child = this;
+            this._Parent.UpdateLinkedGuiElements();
 
             RadioButton rb = null;
 
@@ -150,7 +150,7 @@ namespace Ebook
         {
             if (this._Parent == null) return;
 
-            if (!this._ParentMF.CheckedClicked(this, this.checkBox1.Checked))
+            if (!this._Parent.CheckedClicked(this, this.checkBox1.Checked))
                 this._Parent = null; // Abandon!
         }
     }

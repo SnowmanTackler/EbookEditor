@@ -109,7 +109,8 @@ namespace Ebook
 
                 var p = this.textBoxPath.Text;
 
-                var _ContentNonImageL = new List<ManifestFile>();
+                var _ContentTextL = new List<ManifestFileNavigation>();
+                var _ContentOtherL = new List<ManifestFile>();
                 var _ContentImageL = new List<ManifestFile>();
 
                 var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(p,"content.opf")));
@@ -154,23 +155,24 @@ namespace Ebook
 
                         if (include)
                         {
-                            this._DictItemsByXMLID[mt._StringID] = mt;
-                            this._DictItemsByPath[mt._StringPath] = mt;
-                            this._DictItemsByNode[node4] = mt;
-                            this._ListItems.Add(mt);
-
                             switch (mt._MediaType)
                             {
                                 case ManifestFile.MediaType.Image:
                                     _ContentImageL.Add(mt);
                                     break;
                                 case ManifestFile.MediaType.Text:
-                                    _ContentNonImageL.Add(mt);
+                                    mt = new ManifestFileNavigation(node4, p);
+                                    _ContentTextL.Add(mt as ManifestFileNavigation);
                                     break;
                                 case ManifestFile.MediaType.Other:
-                                    _ContentNonImageL.Add(mt);
+                                    _ContentOtherL.Add(mt);
                                     break;
                             }
+
+                            this._DictItemsByXMLID[mt._StringID] = mt;
+                            this._DictItemsByPath[mt._StringPath] = mt;
+                            this._DictItemsByNode[node4] = mt;
+                            this._ListItems.Add(mt);
                         }
                     }
 
@@ -288,9 +290,9 @@ namespace Ebook
 
                 var missing_files = new HashSet<String>();
 
-                foreach (ManifestFile mf in _ContentNonImageL)
+                foreach (ManifestFile mf in _ContentTextL)
                 {
-                    if (mf._BoolFileExists && (mf._MediaType == ManifestFile.MediaType.Text))
+                    if (mf._BoolFileExists)
                     {
                         int last_dex = mf._StringPath.LastIndexOf("/");
                         String dir = last_dex > 0 ? mf._StringPath.Substring(0, last_dex + 1) : "";
@@ -342,14 +344,16 @@ namespace Ebook
                     Console.WriteLine("Error: Missing File Reference: " + comb);
                 }
 
-                var _ContentTextL = new List<ManifestFileNavigation>();
-                var _ContentOtherL = new List<ManifestFile>();
-
-                foreach (ManifestFile mf in _ContentNonImageL)
+                // Things with references get moved to other
+                for (int i = 0; i < _ContentTextL.Count; i++)
                 {
-                    if ((mf._MediaType == ManifestFile.MediaType.Text) && (mf._IntRefrencesMax == 0))
-                        _ContentTextL.Add(new ManifestFileNavigation(mf));
-                    else _ContentOtherL.Add(mf);
+                    ManifestFile mf = _ContentTextL[i];
+                    if (mf._IntRefrencesMax != 0)
+                    {
+                        _ContentTextL.RemoveAt(i);
+                        _ContentOtherL.Add(mf);
+                        i--;
+                    }
                 }
 
                 _ContentTextL.Sort();
