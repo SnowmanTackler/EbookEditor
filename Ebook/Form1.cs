@@ -9,14 +9,15 @@ using System.Text;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using SamSeifert.Utilities.FileParsing;
+using SamSeifert.Utilities;
 
 namespace Ebook
 {
     public partial class Form1 : Form
     {
-        public ItemTextHandler _ItemTextHandler = new ItemTextHandler();
-        public ItemImageHandler _ItemImageHandler = new ItemImageHandler();
-        public ItemOtherHandler _ItemOtherHandler = new ItemOtherHandler();
+        public OrganizerChapters _ItemTextHandler = new OrganizerChapters();
+        public OrganizerImages _ItemImageHandler = new OrganizerImages();
+        public OrganizerOthers _ItemOtherHandler = new OrganizerOthers();
 
         public Form1()
         {
@@ -341,13 +342,13 @@ namespace Ebook
                     Console.WriteLine("Error: Missing File Reference: " + comb);
                 }
 
-                var _ContentTextL = new List<ManifestFile>();
+                var _ContentTextL = new List<ManifestFileNavigation>();
                 var _ContentOtherL = new List<ManifestFile>();
 
                 foreach (ManifestFile mf in _ContentNonImageL)
                 {
                     if ((mf._MediaType == ManifestFile.MediaType.Text) && (mf._IntRefrencesMax == 0))
-                        _ContentTextL.Add(mf);
+                        _ContentTextL.Add(new ManifestFileNavigation(mf));
                     else _ContentOtherL.Add(mf);
                 }
 
@@ -357,9 +358,9 @@ namespace Ebook
                 this._ItemTextHandler._Content = _ContentTextL.ToArray();
                 this._ItemOtherHandler._Content = _ContentOtherL.ToArray();
 
-                this.uiTableView1.reloadData();
-                this.uiTableView2.reloadData();
-                this.uiTableView3.reloadData();
+                this.uiTableView1.ReloadData();
+                this.uiTableView2.ReloadData();
+                this.uiTableView3.ReloadData();
             }
             finally
             {
@@ -413,9 +414,9 @@ namespace Ebook
             this._ItemOtherHandler.Clear();
             this._ItemTextHandler.Clear();
 
-            this.uiTableView1.reloadData();
-            this.uiTableView2.reloadData();
-            this.uiTableView3.reloadData();
+            this.uiTableView1.ReloadData();
+            this.uiTableView2.ReloadData();
+            this.uiTableView3.ReloadData();
 
             this._DictItemsByNode.Clear();
             this._DictItemsByPath.Clear();
@@ -446,7 +447,7 @@ namespace Ebook
             if (keyData == (Keys.Control | Keys.A))
             {
                 this._ItemTextHandler.SelectAll();
-                this.uiTableView1.reloadData();
+                this.uiTableView1.ReloadData();
                 return true;
             }
             else return base.ProcessCmdKey(ref msg, keyData);
@@ -812,7 +813,7 @@ namespace Ebook
                     foreach (var s in this._ListItems)
                     {
                         s.Checked = true;
-                        s.updateControls();
+                        s.UpdateLinkedGuiElements();
                     }
                     this.bGo_Click(this.bGo, EventArgs.Empty);
                     this.bClear_Click(this.bClear, EventArgs.Empty);

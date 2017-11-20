@@ -33,22 +33,21 @@
             // 
             // _ScrollBar
             // 
-            this._ScrollBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this._ScrollBar.Dock = System.Windows.Forms.DockStyle.Right;
             this._ScrollBar.Location = new System.Drawing.Point(130, 0);
             this._ScrollBar.Name = "_ScrollBar";
             this._ScrollBar.Size = new System.Drawing.Size(20, 150);
             this._ScrollBar.TabIndex = 0;
-            this._ScrollBar.Scroll += new System.Windows.Forms.ScrollEventHandler(this._ScrollBar_Scroll);
+            this._ScrollBar.Scroll += new System.Windows.Forms.ScrollEventHandler(this.ScrollEventHandler);
             // 
             // UITableView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Black;
             this.Controls.Add(this._ScrollBar);
             this.Name = "UITableView";
-            this.Scroll += new System.Windows.Forms.ScrollEventHandler(this.UITableView_Scroll);
+            this.Load += new System.EventHandler(this.UITableView_Load);
+            this.Click += new System.EventHandler(this.UITableView_Click);
             this.Resize += new System.EventHandler(this.UITableView_Resize);
             this.ResumeLayout(false);
 

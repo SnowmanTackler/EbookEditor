@@ -203,31 +203,37 @@
             // 
             // uiTableView3
             // 
-            this.uiTableView3.BackColor = System.Drawing.Color.Black;
+            this.uiTableView3.BackColor = System.Drawing.Color.White;
             this.uiTableView3.Location = new System.Drawing.Point(468, 128);
             this.uiTableView3.Name = "uiTableView3";
             this.uiTableView3.Size = new System.Drawing.Size(350, 300);
+            this.uiTableView3.Tab = 10;
             this.uiTableView3.TabIndex = 17;
+            this.uiTableView3.VerticalSpacing = 1;
             // 
             // uiTableView2
             // 
             this.uiTableView2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.uiTableView2.BackColor = System.Drawing.Color.Black;
+            this.uiTableView2.BackColor = System.Drawing.Color.White;
             this.uiTableView2.Location = new System.Drawing.Point(468, 434);
             this.uiTableView2.Name = "uiTableView2";
             this.uiTableView2.Size = new System.Drawing.Size(350, 380);
+            this.uiTableView2.Tab = 10;
             this.uiTableView2.TabIndex = 14;
+            this.uiTableView2.VerticalSpacing = 1;
             // 
             // uiTableView1
             // 
             this.uiTableView1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.uiTableView1.BackColor = System.Drawing.Color.Black;
+            this.uiTableView1.BackColor = System.Drawing.Color.White;
             this.uiTableView1.Location = new System.Drawing.Point(12, 128);
             this.uiTableView1.Name = "uiTableView1";
             this.uiTableView1.Size = new System.Drawing.Size(450, 686);
+            this.uiTableView1.Tab = 10;
             this.uiTableView1.TabIndex = 13;
+            this.uiTableView1.VerticalSpacing = 10;
             // 
             // Form1
             // 

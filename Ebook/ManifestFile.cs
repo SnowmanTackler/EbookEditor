@@ -18,38 +18,16 @@ namespace Ebook
         public int _IntRefrencesMax { get; private set; }
         public int _IntSpineCount = -1;
 
-        public CheckBox _CurrentCheckBox = null;
-        public Label _CurrentLabelReferences = null;
-
         public enum MediaType { Image, Text, Other };
         public String _StringPath;
         public String _StringPathFull;
         public MediaType _MediaType;
         public String _StringID;
         public bool _BoolFileExists { get; private set; }
-        public bool Checked
-        {
-            get
-            {
-                return this._Checked;
-            }
-            set
-            {
-                if (value != this._Checked)
-                {
-                    this._Checked = value;
 
-                    foreach (var mf in this.Dependants)
-                    {
-                        if (this._Checked) mf.addReference();
-                        else mf.subReference();
-                    }
-
-                    this.updateControls();
-                }
-            }
-        }
-        private bool _Checked = false;
+        // Who is currently display this guys information
+        public CellInterface _Child;
+        public void ForgetChild(CellInterface c) { if (c == this._Child) this._Child = null; }
 
         public int CompareTo(ManifestFile other)
         {
@@ -114,27 +92,35 @@ namespace Ebook
         {
             this._IntRefrences++;
             this.Checked = this._IntRefrences > 0;
-            this.updateControls();
+            this.UpdateLinkedGuiElements();
         }
 
         public void subReference()
         {
             this._IntRefrences--;
             this.Checked = this._IntRefrences > 0;
-            this.updateControls();
+            this.UpdateLinkedGuiElements();
         }
 
-        public void updateControls()
+        public bool ShouldInclude
         {
-            if (this._CurrentCheckBox != null)
+            get
             {
-                this._CurrentCheckBox.Checked = this._Checked;
-                this._CurrentCheckBox.ForeColor = ((!this.Checked) && (this._IntRefrences > 0)) ? Color.Red : Color.Black;
+                return this._Checked || this._IntRefrences > 0;
             }
-            if (this._CurrentLabelReferences != null)
-                this._CurrentLabelReferences.Text = (this._IntRefrencesMax == 0) ?
-                    ((this._IntSpineCount >= 0) ? this._IntSpineCount.ToString() : "") : 
+
+        }
+        public void UpdateLinkedGuiElements()
+        {
+            if (this._Child != null)
+            {
+                this._Child.CheckboxEnabled = this._IntRefrences == 0;
+                this._Child.CheckboxChecked = this.ShouldInclude;
+
+                this._Child.DisplayNumber = (this._IntRefrencesMax == 0) ?
+                    ((this._IntSpineCount >= 0) ? this._IntSpineCount.ToString() : "") :
                     ((this._IntRefrences == 0 ? " " : this._IntRefrences.ToString()) + " / " + this._IntRefrencesMax);
+            }
         }
 
         public override string ToString()
@@ -142,31 +128,59 @@ namespace Ebook
             return this._StringID;
         }
 
-        public void CheckedClicked(object sender, EventArgs e)
-        {
-            var cb = sender as CheckBox;
 
-            if (cb != null)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="checkd"></param>
+        /// <returns>Should Abandon Parent or Not</returns>
+        public bool CheckedClicked(CellInterface sender, bool checkd)
+        {
+            if (sender != this._Child)
             {
-                if (cb != this._CurrentCheckBox)
+                return false;
+            }
+
+            if (this.Checked == checkd)
+            {
+                this.Checked = !this.Checked;
+            }
+
+            return true;
+        }
+
+        private bool _Checked = false;
+        public bool Checked
+        {
+            get
+            {
+                return this._Checked;
+            }
+            set
+            {
+                if (value != this._Checked)
                 {
-                    cb.Click -= new EventHandler(this.CheckedClicked);
-                }
-                else
-                {
-                    if (this.Checked == cb.Checked)
+                    this._Checked = value;
+
+                    foreach (var mf in this.Dependants)
                     {
-                        this.Checked = !this.Checked;
+                        if (this._Checked) mf.addReference();
+                        else mf.subReference();
                     }
+
+                    this.UpdateLinkedGuiElements();
                 }
             }
         }
 
+        /// <summary>
+        /// My version of dealloc.  Clear all references so things can be GC'd
+        /// </summary>
         internal void Clear()
         {
             this.Dependants.Clear();
-            this._CurrentCheckBox = null;
-            this._CurrentLabelReferences = null;
+            this._Child = null;
         }
     }
 }
