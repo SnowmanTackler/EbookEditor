@@ -47,6 +47,9 @@ namespace Ebook
             this._BoolFileExists = File.Exists(this._StringPathFull);
             this.Checked = false;
 
+            this.UpdateAutoInclude(this._StringID);
+            this.UpdateAutoInclude(this._StringPath);
+
             var media_type = params_["media-type"];
             if (media_type.Contains("image"))
             {
@@ -55,11 +58,6 @@ namespace Ebook
             }
             else if (media_type.Contains("xhtml+xml"))
             {
-                if ("titlepage" == this._StringID) this.Checked = true;
-                if ("epl" == this._StringID) this.Checked = true;
-                if ("prl" == this._StringID) this.Checked = true;
-                if ("tp" == this._StringID) this.Checked = true;
-
                 if (this._StringID.Length > 1)
                 {
                     var num = this._StringID.Substring(1);
@@ -80,8 +78,33 @@ namespace Ebook
             {
                 this._MediaType = ManifestFile.MediaType.Other;
             }
-
         }
+
+        public void UpdateAutoInclude(String checker)
+        {
+            if (this.Checked) return;
+            if (checker == null) return;
+
+            checker = checker.ToLower();
+
+            if (
+                ("titlepage" == checker) ||
+                ("epl" == checker) ||
+                ("prl" == checker) ||
+                ("tp" == checker) ||
+
+                checker.Contains("cover") ||
+                checker.Contains("chapter") ||
+                checker.Contains("prologue") ||
+                checker.Contains("epilogue") ||
+                checker.Contains("part") ||
+                checker.Contains("title") ||
+
+                checker.Contains("ars arcanum") || // Brandon Sanderson Mistborn
+
+                false) this.Checked = true;
+        }
+
 
         public void addReferenceMax()
         {
@@ -102,21 +125,12 @@ namespace Ebook
             this.UpdateLinkedGuiElements();
         }
 
-        public bool ShouldInclude
-        {
-            get
-            {
-                return this._Checked || this._IntRefrences > 0;
-            }
-
-        }
-        public void UpdateLinkedGuiElements()
+        public virtual void UpdateLinkedGuiElements()
         {
             if (this._Child != null)
             {
                 this._Child.CheckboxEnabled = this._IntRefrences == 0;
-                this._Child.CheckboxChecked = this.ShouldInclude;
-
+                this._Child.CheckboxChecked = this._Checked;
                 this._Child.DisplayNumber = (this._IntRefrencesMax == 0) ?
                     ((this._IntSpineCount >= 0) ? this._IntSpineCount.ToString() : "") :
                     ((this._IntRefrences == 0 ? " " : this._IntRefrences.ToString()) + " / " + this._IntRefrencesMax);
@@ -142,10 +156,7 @@ namespace Ebook
                 return false;
             }
 
-            if (this.Checked == checkd)
-            {
-                this.Checked = !this.Checked;
-            }
+            this.Checked = !checkd;
 
             return true;
         }

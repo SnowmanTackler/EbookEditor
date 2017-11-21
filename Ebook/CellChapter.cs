@@ -27,19 +27,19 @@ namespace Ebook
         ~CellChapter()
         {
             this._Parent?.ForgetChild(this);
+            this._Parent = null;
         }
 
         public void setup(ManifestFileNavigation mf, int section)
         {
             this._Parent?.ForgetChild(this);
-            this._Parent = mf;
+            this._Parent = null;
+
             this._Section = section;
 
-            this.lPath.Text = this._Parent._StringPath;
-            this.rbDisplayChapter.Enabled = this._Parent._BoolFileExists;
-
-            this._Parent._Child = this;
-            this._Parent.UpdateLinkedGuiElements();
+            this.lPath.Text = mf._StringPath;
+            this.rbDisplayChapter.Enabled = mf._BoolFileExists;
+            this.nudSectionCloses.SetValueMinMaxSafe(mf._NavigationPointCloses);
 
             RadioButton rb = null;
 
@@ -60,6 +60,11 @@ namespace Ebook
             }
 
             rb.Checked = true;
+
+            mf._Child = this;
+            mf.UpdateLinkedGuiElements();
+            this._Parent = mf; // Do this last to prevent event handlers from firing
+
             this.navRadioButtonCheckChanged(rb, EventArgs.Empty);
         }
 
@@ -88,7 +93,7 @@ namespace Ebook
                     }
                     else if (rb == this.rbNavCustom)
                     {
-                        this.tbNavTitle.Text = this._Parent._NavigationNameDefault;
+                        this.tbNavTitle.Text = this._Parent._NavigationName;
                         this._Parent._NavigationType = ManifestFileNavigation.NavigationType.Custom;
                     }
                     else
@@ -117,6 +122,7 @@ namespace Ebook
         {
             if (this._Parent == null) return;
             this._Parent._NavigationPointCloses = (int)Math.Round(this.nudSectionCloses.Value);
+            this.getUITableView().ReloadData(); // Refresh Indents
         }
 
 
@@ -152,6 +158,11 @@ namespace Ebook
 
             if (!this._Parent.CheckedClicked(this, this.checkBox1.Checked))
                 this._Parent = null; // Abandon!
+        }
+
+        public void SetPrimaryColor(Color c)
+        {
+            this.pColor.BackColor = c;
         }
     }
 }

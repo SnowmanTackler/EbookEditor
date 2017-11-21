@@ -44,11 +44,13 @@
             this.label2 = new System.Windows.Forms.Label();
             this.panel4 = new System.Windows.Forms.Panel();
             this.label3 = new System.Windows.Forms.Label();
+            this.pColor = new System.Windows.Forms.Panel();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudSectionCloses)).BeginInit();
             this.panel4.SuspendLayout();
+            this.pColor.SuspendLayout();
             this.SuspendLayout();
             // 
             // lPath
@@ -57,7 +59,7 @@
             this.lPath.Enabled = false;
             this.lPath.Location = new System.Drawing.Point(75, 0);
             this.lPath.Name = "lPath";
-            this.lPath.Size = new System.Drawing.Size(273, 20);
+            this.lPath.Size = new System.Drawing.Size(263, 20);
             this.lPath.TabIndex = 8;
             this.lPath.Text = "path path";
             this.lPath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -81,7 +83,7 @@
             this.rbDisplayChapter.AutoSize = true;
             this.rbDisplayChapter.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.rbDisplayChapter.Dock = System.Windows.Forms.DockStyle.Right;
-            this.rbDisplayChapter.Location = new System.Drawing.Point(464, 0);
+            this.rbDisplayChapter.Location = new System.Drawing.Point(454, 0);
             this.rbDisplayChapter.Name = "rbDisplayChapter";
             this.rbDisplayChapter.Padding = new System.Windows.Forms.Padding(4);
             this.rbDisplayChapter.Size = new System.Drawing.Size(22, 70);
@@ -130,7 +132,7 @@
             this.panel1.Controls.Add(this.rbNavDefault);
             this.panel1.Controls.Add(this.rbNavNone);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel1.Location = new System.Drawing.Point(371, 0);
+            this.panel1.Location = new System.Drawing.Point(361, 0);
             this.panel1.Name = "panel1";
             this.panel1.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.panel1.Size = new System.Drawing.Size(93, 70);
@@ -144,7 +146,7 @@
             this.panel2.Location = new System.Drawing.Point(23, 20);
             this.panel2.Name = "panel2";
             this.panel2.Padding = new System.Windows.Forms.Padding(0, 5, 0, 5);
-            this.panel2.Size = new System.Drawing.Size(348, 30);
+            this.panel2.Size = new System.Drawing.Size(338, 30);
             this.panel2.TabIndex = 11;
             // 
             // tbNavTitle
@@ -152,7 +154,7 @@
             this.tbNavTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tbNavTitle.Location = new System.Drawing.Point(75, 5);
             this.tbNavTitle.Name = "tbNavTitle";
-            this.tbNavTitle.Size = new System.Drawing.Size(273, 20);
+            this.tbNavTitle.Size = new System.Drawing.Size(263, 20);
             this.tbNavTitle.TabIndex = 1;
             this.tbNavTitle.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.tbNavTitle.TextChanged += new System.EventHandler(this.tbNavTitle_TextChanged);
@@ -174,7 +176,7 @@
             this.panel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel3.Location = new System.Drawing.Point(23, 50);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(348, 20);
+            this.panel3.Size = new System.Drawing.Size(338, 20);
             this.panel3.TabIndex = 12;
             // 
             // nudSectionCloses
@@ -209,7 +211,7 @@
             this.panel4.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel4.Location = new System.Drawing.Point(23, 0);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(348, 20);
+            this.panel4.Size = new System.Drawing.Size(338, 20);
             this.panel4.TabIndex = 13;
             // 
             // label3
@@ -222,18 +224,28 @@
             this.label3.Text = "Path:";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // pColor
+            // 
+            this.pColor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.pColor.Controls.Add(this.panel3);
+            this.pColor.Controls.Add(this.panel2);
+            this.pColor.Controls.Add(this.panel4);
+            this.pColor.Controls.Add(this.checkBox1);
+            this.pColor.Controls.Add(this.panel1);
+            this.pColor.Controls.Add(this.rbDisplayChapter);
+            this.pColor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pColor.Location = new System.Drawing.Point(10, 0);
+            this.pColor.Name = "pColor";
+            this.pColor.Size = new System.Drawing.Size(476, 70);
+            this.pColor.TabIndex = 14;
+            // 
             // CellChapter
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Control;
-            this.Controls.Add(this.panel3);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.panel4);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.rbDisplayChapter);
+            this.Controls.Add(this.pColor);
             this.Name = "CellChapter";
+            this.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Size = new System.Drawing.Size(486, 70);
             this.panel1.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
@@ -241,8 +253,9 @@
             this.panel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.nudSectionCloses)).EndInit();
             this.panel4.ResumeLayout(false);
+            this.pColor.ResumeLayout(false);
+            this.pColor.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -264,5 +277,6 @@
         private System.Windows.Forms.NumericUpDown nudSectionCloses;
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Panel pColor;
     }
 }

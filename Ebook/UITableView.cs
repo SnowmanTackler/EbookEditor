@@ -49,6 +49,9 @@ namespace Ebook
 
         public interface DataSource
         {
+            // Happens on Scroll, Really Anything
+            void Reloading();
+
             int numberOfSections(UITableView tv);
             int numberOfRowsInSection(UITableView tv, int section);
 
@@ -106,6 +109,8 @@ namespace Ebook
 
             if (this._Panel == null)
                 return;
+
+            this._DataSource.Reloading();
 
             using (new SamSeifert.Utilities.CustomControls.LayoutSuspender(this._Panel))
             {
@@ -263,11 +268,23 @@ namespace Ebook
         {
             this.ReloadData();
         }
+    }
 
-        private void UITableView_Click(object sender, EventArgs e)
+    public static class UITableViewExtensions
+    {
+        /// <summary>
+        /// Gets the nearest parent UITableView
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public static UITableView getUITableView(this Control c)
         {
-            Logger.WriteLine("CLICK");
+            if (c is UITableView) return c as UITableView;
+            else return c.Parent?.getUITableView();
+
         }
 
     }
+
+
 }

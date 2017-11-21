@@ -47,7 +47,6 @@
             this.Controls.Add(this._ScrollBar);
             this.Name = "UITableView";
             this.Load += new System.EventHandler(this.UITableView_Load);
-            this.Click += new System.EventHandler(this.UITableView_Click);
             this.Resize += new System.EventHandler(this.UITableView_Resize);
             this.ResumeLayout(false);
 

@@ -13,6 +13,8 @@ namespace Ebook
         public ManifestFile[] _Content = new ManifestFile[0];
         public PictureBox _PictureBox;
 
+        public void Reloading() { }
+
         public int numberOfSections(UITableView tv) { return this._Content.Length; }
 
         public int heightForHeaderInSection(UITableView tv, int section) { return Constants._CellHeight; }

@@ -107,260 +107,355 @@ namespace Ebook
                 this.bGo.Enabled = true;
                 this.textBoxPath.Enabled = false;
 
-                var p = this.textBoxPath.Text;
+                var book_path = this.textBoxPath.Text;
 
-                var _ContentTextL = new List<ManifestFileNavigation>();
-                var _ContentOtherL = new List<ManifestFile>();
-                var _ContentImageL = new List<ManifestFile>();
+                var content_text = new List<ManifestFileNavigation>();
+                var content_other = new List<ManifestFile>();
+                var content_image = new List<ManifestFile>();
 
-                var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(p,"content.opf")));
-                var package_matches = tf.getMatches("package");
-                if (package_matches.Count != 1) throw new Exception("Invalid XML 1");
-                if (!(package_matches[0] is TagFile)) throw new Exception("Invalid XML2");
-                this._TagFileBase = package_matches[0] as TagFile;
+                {
+                    var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(book_path, "content.opf")));
+                    var package_matches = tf.getMatchesAtAnyDepth("package").ToList();
+                    if (package_matches.Count != 1) throw new Exception("Invalid XML 1");
+                    if (!(package_matches[0] is TagFile)) throw new Exception("Invalid XML2");
+                    this._TagFileBase = package_matches[0] as TagFile;
 
-                TagFile manifest = null;
-                TagFile spine = null;
-                foreach (var node1 in this._TagFileBase._Children) if (node1 is TagFile)
-                    {
-                        var node2 = node1 as TagFile;
-                        switch (node2._Name)
+                    TagFile manifest = null;
+                    TagFile spine = null;
+                    foreach (var node1 in this._TagFileBase._Children) if (node1 is TagFile)
                         {
-                            case "manifest":
-                                if (manifest == null) manifest = node2;
-                                else Console.WriteLine("Error: Multiple Manifests");
-                                break;
-                            case "spine":
-                                if (spine == null) spine = node2;
-                                else Console.WriteLine("Error: Multiple Spines");
-                                break;
-                            case "metadata":
-                                if (this._TagFileMetadata == null) this._TagFileMetadata = node2;
-                                else Console.WriteLine("Error: Multiple Metadatas");
-                                break;
-                        }
-                    }
-
-                foreach (var node3 in manifest._Children) if (node3 is TagFile)
-                    {
-                        var node4 = node3 as TagFile;
-                        var params_ = node4._Params;
-
-
-                        var mt = new ManifestFile(node4, p);
-
-                        bool include = true;
-
-                        include &= !("toc.ncx".Equals(mt._StringPath));
-
-                        if (include)
-                        {
-                            switch (mt._MediaType)
+                            var node2 = node1 as TagFile;
+                            switch (node2._Name)
                             {
-                                case ManifestFile.MediaType.Image:
-                                    _ContentImageL.Add(mt);
+                                case "manifest":
+                                    if (manifest == null) manifest = node2;
+                                    else Console.WriteLine("Error: Multiple Manifests");
                                     break;
-                                case ManifestFile.MediaType.Text:
-                                    mt = new ManifestFileNavigation(node4, p);
-                                    _ContentTextL.Add(mt as ManifestFileNavigation);
+                                case "spine":
+                                    if (spine == null) spine = node2;
+                                    else Console.WriteLine("Error: Multiple Spines");
                                     break;
-                                case ManifestFile.MediaType.Other:
-                                    _ContentOtherL.Add(mt);
+                                case "metadata":
+                                    if (this._TagFileMetadata == null) this._TagFileMetadata = node2;
+                                    else Console.WriteLine("Error: Multiple Metadatas");
                                     break;
                             }
-
-                            this._DictItemsByXMLID[mt._StringID] = mt;
-                            this._DictItemsByPath[mt._StringPath] = mt;
-                            this._DictItemsByNode[node4] = mt;
-                            this._ListItems.Add(mt);
-                        }
-                    }
-
-                int spine_count = 0;
-                foreach (var node3 in spine._Children) if (node3 is TagFile)
-                    {
-                        var node4 = node3 as TagFile;
-                        var params_ = node4._Params;
-
-                        ManifestFile relative = null;
-                        String idref = params_["idref"];
-                        if (this._DictItemsByXMLID.TryGetValue(idref, out relative))
-                        {
-                            this._DictItemsByNode[node4] = relative;
-                            relative._IntSpineCount = spine_count++;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Error, no corresponding manifest item for spine item: " + idref);
                         }
 
-                    }
-
-                bool found_author = false;
-                bool found_title = false;
-                bool found_genre = false;
-                foreach (var node3 in this._TagFileMetadata._Children) if (node3 is TagFile)
-                    {
-                        var node4 = node3 as TagFile;
-                        switch (node4._Name)
+                    foreach (var node3 in manifest._Children) if (node3 is TagFile)
                         {
-                            case "dc:creator":
-                                {
-                                    if (found_author)
-                                    {
-                                        Console.Write("Error: Second Author Found: ");
-                                        node4.Display();
-                                    }
-                                    else if (node4._Children.Length == 1)
-                                    {
-                                        if (node4._Children.First() is TagText)
-                                        {
-                                            found_author = true;
-                                            this.textBoxAuthor.Text = (node4._Children.First() as TagText).text;
-                                        }
-                                        else
-                                        {
-                                            Console.Write("Error: Author Wrong Type of Children: ");
-                                            node4.Display();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.Write("Error: Author Wrong Number of Children: ");
-                                        node4.Display();
-                                    }
-                                }
-                                break;
-                            case "dc:title":
-                                {
-                                    if (found_title)
-                                    {
-                                        Console.Write("Error: Second Title Found: ");
-                                        node4.Display();
-                                    }
-                                    else if (node4._Children.Length == 1)
-                                    {
-                                        if (node4._Children.First() is TagText)
-                                        {
-                                            found_title = true;
-                                            this.textBoxTitle.Text = (node4._Children.First() as TagText).text;
-                                        }
-                                        else
-                                        {
-                                            Console.Write("Error: Title Wrong Type of Children: ");
-                                            node4.Display();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.Write("Error: Title Wrong Number of Children: ");
-                                        node4.Display();
-                                    }
-                                }
-                                break;
-                            case "dc:genre":
-                                {
-                                    if (found_genre)
-                                    {
-                                        Console.Write("Error: Second Genre Found: ");
-                                        node4.Display();
-                                    }
-                                    else if (node4._Children.Length == 1)
-                                    {
-                                        if (node4._Children.First() is TagText)
-                                        {
-                                            found_genre = true;
-                                            this.textBoxGenre.Text = (node4._Children.First() as TagText).text;
-                                        }
-                                        else
-                                        {
-                                            Console.Write("Error: Genre Wrong Type of Children: ");
-                                            node4.Display();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.Write("Error: Genre Wrong Number of Children: ");
-                                        node4.Display();
-                                    }
-                                }
-                                break;
-                        }
-                    }
+                            var node4 = node3 as TagFile;
+                            var params_ = node4._Params;
 
-                var missing_files = new HashSet<String>();
 
-                foreach (ManifestFile mf in _ContentTextL)
-                {
-                    if (mf._BoolFileExists)
-                    {
-                        int last_dex = mf._StringPath.LastIndexOf("/");
-                        String dir = last_dex > 0 ? mf._StringPath.Substring(0, last_dex + 1) : "";
+                            var mt = new ManifestFile(node4, book_path);
 
-                        TagFile tf2 = TagFile.ParseText(File.ReadAllText(mf._StringPathFull));
+                            bool include = true;
 
-                        foreach (var ls in tf2.getMatches("link"))
-                            this.haveEmbeddedItem(ls._Params["href"], dir, mf, missing_files);
-                        foreach (var ls in tf2.getMatches("img"))
-                            this.haveEmbeddedItem(ls._Params["src"], dir, mf, missing_files);
-                        foreach (var ls in tf2.getMatches("image"))
-                            this.haveEmbeddedItem(ls._Params["xlink:href"], dir, mf, missing_files);
+                            include &= !("toc.ncx".Equals(mt._StringPath));
 
-                        foreach (var ls in tf2.getMatches("style"))
-                        {
-                            foreach (var ls2 in ls._Children)
+                            if (include)
                             {
-                                if (ls2 is TagText)
+                                switch (mt._MediaType)
                                 {
-                                    String text = (ls2 as TagText).text;
+                                    case ManifestFile.MediaType.Image:
+                                        content_image.Add(mt);
+                                        break;
+                                    case ManifestFile.MediaType.Text:
+                                        mt = new ManifestFileNavigation(node4, book_path);
+                                        content_text.Add(mt as ManifestFileNavigation);
+                                        break;
+                                    case ManifestFile.MediaType.Other:
+                                        content_other.Add(mt);
+                                        break;
+                                }
 
-                                    int dex = -1;
-                                    int dlex = 1;
+                                this._DictItemsByXMLID[mt._StringID] = mt;
+                                this._DictItemsByPath[mt._StringPath] = mt;
+                                this._DictItemsByNode[node4] = mt;
+                                this._ListItems.Add(mt);
+                            }
+                        }
 
-                                    int count = -1;
-                                    while (dlex > 0)
+                    int spine_count = 0;
+                    foreach (var node3 in spine._Children) if (node3 is TagFile)
+                        {
+                            var node4 = node3 as TagFile;
+                            var params_ = node4._Params;
+
+                            ManifestFile relative = null;
+                            String idref = params_["idref"];
+                            if (this._DictItemsByXMLID.TryGetValue(idref, out relative))
+                            {
+                                this._DictItemsByNode[node4] = relative;
+                                relative._IntSpineCount = spine_count++;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Error, no corresponding manifest item for spine item: " + idref);
+                            }
+
+                        }
+
+                    bool found_author = false;
+                    bool found_title = false;
+                    bool found_genre = false;
+                    foreach (var node3 in this._TagFileMetadata._Children) if (node3 is TagFile)
+                        {
+                            var node4 = node3 as TagFile;
+                            switch (node4._Name)
+                            {
+                                case "dc:creator":
                                     {
-                                        count++;
-                                        dex = dlex;
-                                        dlex = text.IndexOf("@font-face", dex + 1);
-
-                                        if (dlex > 0)
+                                        if (found_author)
                                         {
-                                            int first = text.IndexOf("{", dlex);
-                                            int last = text.IndexOf("}", dlex);
-                                            var path = FontFaceSerializer.getFontPath(
-                                                text.Substring(first + 1, last - first - 1));
-                                            if (path != null) this.haveEmbeddedItem(path, dir, mf, missing_files);
+                                            Console.Write("Error: Second Author Found: ");
+                                            node4.Display();
+                                        }
+                                        else if (node4._Children.Length == 1)
+                                        {
+                                            if (node4._Children.First() is TagText)
+                                            {
+                                                found_author = true;
+                                                this.textBoxAuthor.Text = (node4._Children.First() as TagText)._Text;
+                                            }
+                                            else
+                                            {
+                                                Console.Write("Error: Author Wrong Type of Children: ");
+                                                node4.Display();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Console.Write("Error: Author Wrong Number of Children: ");
+                                            node4.Display();
+                                        }
+                                    }
+                                    break;
+                                case "dc:title":
+                                    {
+                                        if (found_title)
+                                        {
+                                            Console.Write("Error: Second Title Found: ");
+                                            node4.Display();
+                                        }
+                                        else if (node4._Children.Length == 1)
+                                        {
+                                            if (node4._Children.First() is TagText)
+                                            {
+                                                found_title = true;
+                                                this.textBoxTitle.Text = (node4._Children.First() as TagText)._Text;
+                                            }
+                                            else
+                                            {
+                                                Console.Write("Error: Title Wrong Type of Children: ");
+                                                node4.Display();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Console.Write("Error: Title Wrong Number of Children: ");
+                                            node4.Display();
+                                        }
+                                    }
+                                    break;
+                                case "dc:genre":
+                                    {
+                                        if (found_genre)
+                                        {
+                                            Console.Write("Error: Second Genre Found: ");
+                                            node4.Display();
+                                        }
+                                        else if (node4._Children.Length == 1)
+                                        {
+                                            if (node4._Children.First() is TagText)
+                                            {
+                                                found_genre = true;
+                                                this.textBoxGenre.Text = (node4._Children.First() as TagText)._Text;
+                                            }
+                                            else
+                                            {
+                                                Console.Write("Error: Genre Wrong Type of Children: ");
+                                                node4.Display();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Console.Write("Error: Genre Wrong Number of Children: ");
+                                            node4.Display();
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+
+                    var missing_files = new HashSet<String>();
+
+                    foreach (ManifestFile mf in content_text)
+                    {
+                        if (mf._BoolFileExists)
+                        {
+                            int last_dex = mf._StringPath.LastIndexOf("/");
+                            String dir = last_dex > 0 ? mf._StringPath.Substring(0, last_dex + 1) : "";
+
+                            TagFile tf2 = TagFile.ParseText(File.ReadAllText(mf._StringPathFull));
+
+                            foreach (var ls in tf2.getMatchesAtAnyDepth("link"))
+                                this.haveEmbeddedItem(ls._Params["href"], dir, mf, missing_files);
+                            foreach (var ls in tf2.getMatchesAtAnyDepth("img"))
+                                this.haveEmbeddedItem(ls._Params["src"], dir, mf, missing_files);
+                            foreach (var ls in tf2.getMatchesAtAnyDepth("image"))
+                                this.haveEmbeddedItem(ls._Params["xlink:href"], dir, mf, missing_files);
+
+                            foreach (var ls in tf2.getMatchesAtAnyDepth("style"))
+                            {
+                                foreach (var ls2 in ls._Children)
+                                {
+                                    if (ls2 is TagText)
+                                    {
+                                        String text = (ls2 as TagText)._Text;
+
+                                        int dex = -1;
+                                        int dlex = 1;
+
+                                        int count = -1;
+                                        while (dlex > 0)
+                                        {
+                                            count++;
+                                            dex = dlex;
+                                            dlex = text.IndexOf("@font-face", dex + 1);
+
+                                            if (dlex > 0)
+                                            {
+                                                int first = text.IndexOf("{", dlex);
+                                                int last = text.IndexOf("}", dlex);
+                                                var path = FontFaceSerializer.getFontPath(
+                                                    text.Substring(first + 1, last - first - 1));
+                                                if (path != null) this.haveEmbeddedItem(path, dir, mf, missing_files);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                foreach (var comb in missing_files)
-                {
-                    Console.WriteLine("Error: Missing File Reference: " + comb);
-                }
-
-                // Things with references get moved to other
-                for (int i = 0; i < _ContentTextL.Count; i++)
-                {
-                    ManifestFile mf = _ContentTextL[i];
-                    if (mf._IntRefrencesMax != 0)
+                    foreach (var comb in missing_files)
                     {
-                        _ContentTextL.RemoveAt(i);
-                        _ContentOtherL.Add(mf);
-                        i--;
+                        Console.WriteLine("Error: Missing File Reference: " + comb);
                     }
+
+                    // Text with references get moved to other
+                    for (int i = 0; i < content_text.Count; i++)
+                    {
+                        ManifestFile mf = content_text[i];
+                        if (mf._IntRefrencesMax != 0)
+                        {
+                            content_text.RemoveAt(i);
+                            content_other.Add(mf);
+                            i--;
+                        }
+                    }
+
+                    content_text.Sort();
                 }
 
-                _ContentTextL.Sort();
 
-                this._ItemImageHandler._Content = _ContentImageL.ToArray();
-                this._ItemTextHandler._Content = _ContentTextL.ToArray();
-                this._ItemOtherHandler._Content = _ContentOtherL.ToArray();
+                { // Get table of contents data
+                    var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(book_path, "toc.ncx")));
+                    var nav_maps = tf.getMatches("ncx", "navMap").ToList();
+                    if (nav_maps.Count != 1)
+                    {
+                        MessageBox.Show("Invalid XML 1: toc.ncx");
+                        return;
+                    }
+                    if (!(nav_maps[0] is TagFile))
+                    {
+                        MessageBox.Show("Invalid XML 2: toc.ncx");
+                        return;
+                    }
+                    
+                    var name_path_indent_s = new List<Tuple<string, string, int>>();
+                    Action<TagItem, int> recursive_search = null;
+                    recursive_search = (TagItem node, int level) =>
+                    {
+                        if (node is TagFile)
+                        {
+                            foreach (var child in (node as TagFile)._Children)
+                            {
+                                recursive_search(child, level + 1);
+                            }
+                        }
+                        else if (node is TagText)
+                        {
+                            if (node.MatchesHeirarchicalNaming(null, "text", "navLabel", "navPoint"))
+                            {
+                                var content_array = node.GetParent(3)?.getMatchesAtZeroDepth("content")?.ToArray();
+
+                                if (content_array == null) return;
+                                if (content_array.Length != 1) return;
+                                if (!(content_array[0] is TagFile)) return;
+
+                                var content = content_array[0] as TagFile;
+
+                                String path;
+                                if (content._Params.TryGetValue("src", out path))
+                                {
+                                    // - 3 for the 3 parents to get to root!
+                                    int tab_index = level - 3;
+                                    String chap_name = (node as TagText)._Text;
+                                    name_path_indent_s.Add(new Tuple<string, string, int>(chap_name, path, tab_index));
+                                    for (int i = 0; i < tab_index; i++)
+                                        Console.Write(" ");
+                                    Console.WriteLine(chap_name + " " + path);
+                                }
+                            }
+                        }
+                    };
+                    
+                    recursive_search(nav_maps[0] as TagFile, 0);
+
+                    if (name_path_indent_s.Count > 0)
+                    {
+                        var key_path_value_name_closes = new Dictionary<string, Tuple<string, int>>();
+
+                        int min_index = name_path_indent_s.Select(s => s.Item3).Min();
+
+                        for (int i = 0; i < name_path_indent_s.Count; i++)
+                        {
+                            var tup = name_path_indent_s[i];
+                            String name = tup.Item1;
+                            String path = tup.Item2;
+                            int tab_index = tup.Item3 - min_index;
+
+                            int next_tab_index = (i == name_path_indent_s.Count - 1)
+                                ? 0 : (name_path_indent_s[i + 1].Item3 - min_index);
+
+                            key_path_value_name_closes[path] = new Tuple<string, int>(
+                                name, 1 + tab_index - next_tab_index);
+                        }
+
+                        foreach (var mfn in content_text)
+                        {
+                            Tuple<string, int> tup;
+                            if (key_path_value_name_closes.TryGetValue(mfn._StringPath, out tup))
+                            {
+                                mfn._NavigationNameDefault = tup.Item1;
+                                mfn._NavigationName = tup.Item1;
+                                mfn._NavigationType = ManifestFileNavigation.NavigationType.Default;
+                                mfn._NavigationPointCloses = tup.Item2;
+
+                                mfn.UpdateAutoInclude(tup.Item1); // "Chapter" "Part" "Epilogue"
+                            }
+                        }
+                    }                
+                }
+
+
+
+                this._ItemImageHandler._Content = content_image.ToArray();
+                this._ItemTextHandler.SetContent(content_text);
+                this._ItemOtherHandler._Content = content_other.ToArray();
 
                 this.uiTableView1.ReloadData();
                 this.uiTableView2.ReloadData();
@@ -541,7 +636,7 @@ namespace Ebook
             }
 
             var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(this.textBoxPath.Text, "toc.ncx")));
-            var ncx_matches = tf.getMatches("ncx");
+            var ncx_matches = tf.getMatchesAtAnyDepth("ncx").ToList();
             if (ncx_matches.Count != 1)
             {
                 MessageBox.Show("Invalid XML 1: toc.ncx");
@@ -615,7 +710,7 @@ namespace Ebook
                         {
                             for (int i = 0; i < indent; i++) sw.Write('\t');
                             sw.Write(f);
-                            sw.Write((tf._Children[0] as TagText).text);
+                            sw.Write((tf._Children[0] as TagText)._Text);
                             sw.WriteLine(b);
                         }
                         else
@@ -636,7 +731,7 @@ namespace Ebook
                 else if (ti is TagText)
                 {
                     var tt = ti as TagText;
-                    for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(tt.text);
+                    for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(tt._Text);
                 }
                 else Console.WriteLine("Error: Saving not a file or text");
             }
@@ -823,6 +918,16 @@ namespace Ebook
                     this.bClear_Click(this.bClear, EventArgs.Empty);
                 }
             }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this.SaveFormState();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            this.LoadFormState();
         }
     }
 }

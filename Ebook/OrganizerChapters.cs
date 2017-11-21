@@ -10,8 +10,28 @@ namespace Ebook
 {
     public class OrganizerChapters : UITableView.DataSource
     {
-        public ManifestFileNavigation[] _Content = new ManifestFileNavigation[0];
+        public void Reloading()
+        {
+            int level = 0;
+            foreach (var mfn in this._Content)
+            {
+                if (mfn.Checked)
+                {
+                    mfn._Indents = level;
+                    level += 1 - mfn._NavigationPointCloses;
+                }
+            }
+        }
+
+        private ManifestFileNavigation[] _Content = new ManifestFileNavigation[0];
         public WebBrowser _WebBrowser;
+
+        public void SetContent(IEnumerable<ManifestFileNavigation> content)
+        {
+            if (content == null) this._Content = new ManifestFileNavigation[0];
+            else this._Content = content.ToArray();
+        }
+
 
         public int numberOfSections(UITableView tv) { return this._Content.Length; }
     
