@@ -787,7 +787,7 @@ namespace Ebook
                 for (int i = 0; i < indent; i++) sw.Write('\t');
                 sw.WriteLine("<meta name=\"cover\" content=\"cover\"/>");
             }
-            else if ("navMap".Equals(tf._Name))
+            else if ("navMap".Equals(tf._Name)) // TABLE OF CONTENTS
             {
                 Console.WriteLine("Single Find: \"navMap\"");
                 int play_order = 1;
@@ -818,6 +818,7 @@ namespace Ebook
             else if ("guide".Equals(tf._Name))
             {
                 Console.WriteLine("Single Find: \"guide\"");
+
                 foreach (var ti in tf._Children)
                 {
                     if (ti is TagFile)
@@ -826,9 +827,16 @@ namespace Ebook
                         String href = null;
                         if (np._Params.TryGetValue("href", out href))
                         {
-                            if ("titlepage.xhtml".Equals(href))
+                            foreach (var mfn in this._ItemTextHandler.EnumerateContent())
                             {
-                                this.saveXML(np, sw, indent);
+                                if (mfn.Checked)
+                                {
+                                    if (String.Equals(mfn._StringPath, href))
+                                    {
+                                        this.saveXML(np, sw, indent);
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }

@@ -32,6 +32,11 @@ namespace Ebook
             else this._Content = content.ToArray();
         }
 
+        public IEnumerable<ManifestFileNavigation> EnumerateContent()
+        {
+            return this._Content;
+        }
+
 
         public int numberOfSections(UITableView tv) { return this._Content.Length; }
     

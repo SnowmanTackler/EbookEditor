@@ -21,7 +21,6 @@ namespace Ebook
         /// </summary>
         public int _Indents = 0;
 
-
         public ManifestFileNavigation(TagFile node, string base_path) : base(node, base_path)
         {
         }
