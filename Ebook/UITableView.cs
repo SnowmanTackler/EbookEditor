@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using SamSeifert.Utilities;
+using SamSeifert.Utilities.Extensions;
 
 namespace Ebook
 {
@@ -268,22 +269,6 @@ namespace Ebook
         {
             this.ReloadData();
         }
-    }
-
-    public static class UITableViewExtensions
-    {
-        /// <summary>
-        /// Gets the nearest parent UITableView
-        /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        public static UITableView getUITableView(this Control c)
-        {
-            if (c is UITableView) return c as UITableView;
-            else return c.Parent?.getUITableView();
-
-        }
-
     }
 
 

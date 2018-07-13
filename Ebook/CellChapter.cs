@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using SamSeifert.Utilities;
 using SamSeifert.Utilities.Json;
+using SamSeifert.Utilities.Extensions;
 
 namespace Ebook
 {
@@ -88,7 +89,7 @@ namespace Ebook
                     }
                     else if (rb == this.rbNavDefault)
                     {
-                        this.tbNavTitle.Text = this._Parent._NavigationNameDefault;
+                        this.tbNavTitle.Text = null;
                         this._Parent._NavigationType = ManifestFileNavigation.NavigationType.Default;
                     }
                     else if (rb == this.rbNavCustom)
@@ -122,7 +123,7 @@ namespace Ebook
         {
             if (this._Parent == null) return;
             this._Parent._NavigationPointCloses = (int)Math.Round(this.nudSectionCloses.Value);
-            this.getUITableView().ReloadData(); // Refresh Indents
+            this.GetParent<UITableView>()?.ReloadData(); // Refresh Indents
         }
 
 

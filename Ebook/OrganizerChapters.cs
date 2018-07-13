@@ -1,4 +1,5 @@
 ﻿using SamSeifert.Utilities;
+using SamSeifert.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -15,10 +16,11 @@ namespace Ebook
             int level = 0;
             foreach (var mfn in this._Content)
             {
+                mfn._Indents = level;
                 if (mfn.Checked)
                 {
-                    mfn._Indents = level;
-                    level += 1 - mfn._NavigationPointCloses;
+                    if (mfn._NavigationType != ManifestFileNavigation.NavigationType.None) level += 1;
+                    level -= mfn._NavigationPointCloses;
                 }
             }
         }
@@ -91,7 +93,9 @@ namespace Ebook
         public void radioButton1_Click(object sender, EventArgs e)
         {
             RadioButton rb = sender as RadioButton;
-            var par = rb.Parent as CellChapter;
+            var par = rb.GetParent<CellChapter>();
+            if (par == null) return;
+
             if (!rb.Checked)
             {
                 rb.Checked = true;

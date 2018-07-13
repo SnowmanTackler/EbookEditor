@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Xml.Serialization;
 using SamSeifert.Utilities.FileParsing;
 using SamSeifert.Utilities;
+using SamSeifert.Utilities.Extensions;
 
 namespace Ebook
 {
@@ -363,7 +364,7 @@ namespace Ebook
 
                 { // Get table of contents data
                     var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(book_path, "toc.ncx")));
-                    var nav_maps = tf.getMatches("ncx", "navMap").ToList();
+                    var nav_maps = tf.getMatchesAtAnyDepth("ncx", "navMap").ToList();
                     if (nav_maps.Count != 1)
                     {
                         MessageBox.Show("Invalid XML 1: toc.ncx");
@@ -440,9 +441,8 @@ namespace Ebook
                             Tuple<string, int> tup;
                             if (key_path_value_name_closes.TryGetValue(mfn._StringPath, out tup))
                             {
-                                mfn._NavigationNameDefault = tup.Item1;
                                 mfn._NavigationName = tup.Item1;
-                                mfn._NavigationType = ManifestFileNavigation.NavigationType.Default;
+                                mfn._NavigationType = ManifestFileNavigation.NavigationType.Custom;
                                 mfn._NavigationPointCloses = tup.Item2;
 
                                 mfn.UpdateAutoInclude(tup.Item1); // "Chapter" "Part" "Epilogue"
@@ -632,7 +632,7 @@ namespace Ebook
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter(Path.Combine(new_home, "content.opf")))
             {
                 sw.WriteLine("<?xml version='1.0' encoding='utf-8'?>");
-                this.saveXML(this._TagFileBase, sw, 0);
+                this.SaveContentToXML(this._TagFileBase, sw, 0);
             }
 
             var tf = TagFile.ParseText(File.ReadAllText(Path.Combine(this.textBoxPath.Text, "toc.ncx")));
@@ -651,7 +651,7 @@ namespace Ebook
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter(Path.Combine(new_home, "toc.ncx")))
             {
                 sw.WriteLine("<?xml version='1.0' encoding='utf-8'?>");
-                this.saveXML(ncx_matches[0] as TagFile, sw, 0);
+                this.SaveContentToXML(ncx_matches[0] as TagFile, sw, 0);
             }
 
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter(Path.Combine(new_home, "mimetype")))
@@ -689,7 +689,13 @@ namespace Ebook
             Console.WriteLine("Finished Save");
         }
 
-        void saveXML(TagItem ti, System.IO.StreamWriter sw, int indent)
+        void IndentWrite(System.IO.StreamWriter sw, int indent, string final = null)
+        {
+            for (int i = 0; i < indent; i++) sw.Write('\t');
+            if (final != null) sw.WriteLine(final);
+        }
+
+        void SaveContentToXML(TagItem ti, System.IO.StreamWriter sw, int indent)
         {
             bool save = true;
             ManifestFile mf = null;
@@ -708,142 +714,218 @@ namespace Ebook
                             ("text".Equals(tf._Name)) &&
                             (tf._Children[0] is TagText))
                         {
-                            for (int i = 0; i < indent; i++) sw.Write('\t');
+                            IndentWrite(sw, indent);
                             sw.Write(f);
                             sw.Write((tf._Children[0] as TagText)._Text);
                             sw.WriteLine(b);
                         }
                         else
                         {
-                            for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(f);
-                            this.saveNextLevel(tf, sw, indent + 1);
-                            for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(b);
+                            IndentWrite(sw, indent, f);
+
+                            if (tf == this._TagFileMetadata) this.SaveMetaData(tf, sw, indent + 1);
+                            else switch (tf._Name)
+                                {
+                                    case "navMap":
+                                        Console.WriteLine("Single Find: \"navMap\"");
+                                        this.SaveNavMap(tf, sw, indent);
+                                        break;
+                                    case "docTitle":
+                                        Console.WriteLine("Single Find: \"docTitle\"");
+                                        this.SaveTitle(tf, sw, indent + 1);
+                                        break;
+                                    case "guide":
+                                        Console.WriteLine("Single Find: \"guide\"");
+                                        this.SaveGuide(tf, sw, indent + 1);
+                                        break;
+                                    default:
+                                        foreach (var ch in tf._Children) this.SaveContentToXML(ch, sw, indent + 1);
+                                        break;
+                                }
+
+                            IndentWrite(sw, indent, b);
                         }
                     }
                     else
                     {
                         String mid;
                         tf.getStringXML(out mid);
-                        for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(mid);
+                        IndentWrite(sw, indent, mid);
                     }
 
                 }
                 else if (ti is TagText)
                 {
                     var tt = ti as TagText;
-                    for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(tt._Text);
+                    IndentWrite(sw, indent, tt._Text);
                 }
                 else Console.WriteLine("Error: Saving not a file or text");
             }
         }
 
-        public void saveNextLevel(TagFile tf, System.IO.StreamWriter sw, int indent)
+        private void SaveMetaData(TagFile tf, System.IO.StreamWriter sw, int indent)
         {
-            if (tf == this._TagFileMetadata)
+            foreach (var ch in tf._Children)
             {
-                foreach (var ch in tf._Children)
+                if (ch is TagFile)
                 {
-                    if (ch is TagFile)
+                    var tft = ch as TagFile;
+                    switch (tft._Name)
                     {
-                        var tft = ch as TagFile;
-                        switch (tft._Name)
-                        {
-                            case "dc:identifier":
-                                this.saveXML(ch, sw, indent);
-                                break;
-                        }
+                        case "dc:identifier":
+                            this.SaveContentToXML(ch, sw, indent);
+                            break;
                     }
-                    else this.saveXML(ch, sw, indent);
                 }
-
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<dc:creator opf:role=\"aut\">");
-                for (int i = 0; i <= indent; i++) sw.Write('\t');
-                sw.WriteLine(this.textBoxAuthor.Text);
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("</dc:creator>");
-
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<dc:title>");
-                for (int i = 0; i <= indent; i++) sw.Write('\t');
-                sw.WriteLine(this.textBoxTitle.Text);
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("</dc:title>");
-
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<dc:genre>");
-                for (int i = 0; i <= indent; i++) sw.Write('\t');
-                sw.WriteLine(this.textBoxGenre.Text);
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("</dc:genre>");
-
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<dc:language>");
-                for (int i = 0; i <= indent; i++) sw.Write('\t');
-                sw.WriteLine("en");
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("</dc:language>");
-
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<meta name=\"cover\" content=\"cover\"/>");
+                else this.SaveContentToXML(ch, sw, indent);
             }
-            else if ("navMap".Equals(tf._Name)) // TABLE OF CONTENTS
+
+            IndentWrite(sw, indent, "<dc:creator opf:role=\"aut\">");
+            IndentWrite(sw, indent + 1, this.textBoxAuthor.Text);
+            IndentWrite(sw, indent, "</dc:creator>");
+
+            IndentWrite(sw, indent, "<dc:title>");
+            IndentWrite(sw, indent + 1, this.textBoxTitle.Text);
+            IndentWrite(sw, indent, "</dc:title>");
+
+            IndentWrite(sw, indent, "<dc:genre>");
+            IndentWrite(sw, indent + 1, this.textBoxGenre.Text);
+            IndentWrite(sw, indent, "</dc:genre>");
+
+            IndentWrite(sw, indent, "<dc:language>");
+            IndentWrite(sw, indent + 1, "en");
+            IndentWrite(sw, indent, "</dc:language>");
+
+            IndentWrite(sw, indent, "<meta name=\"cover\" content=\"cover\"/>");
+        }
+
+        private void SaveNavMap(TagFile tf, System.IO.StreamWriter sw, int indent)
+        {
+            int tab_index = 0;
+            int max_index = 0;
+
+            foreach (var mfn in this._ItemTextHandler.EnumerateContent())
             {
-                Console.WriteLine("Single Find: \"navMap\"");
-                int play_order = 1;
-
-                foreach (var ti in tf._Children)
+                if (mfn.Checked && (mfn._NavigationType != ManifestFileNavigation.NavigationType.None))
                 {
-                    if (ti is TagFile)
-                    {
-                        var np = ti as TagFile;
-                        if ("navPoint".Equals(np._Name))
-                            this.saveNavPoint(np, ref play_order, sw, indent);
-
-                        else Console.WriteLine("Error: navMap has something besides navPoint");
-                    }
-                    else Console.WriteLine("Error: navMap has TagText");
+                    max_index = Math.Max(max_index, tab_index + 1);
+                    tab_index += 1 - mfn._NavigationPointCloses;
                 }
             }
-            else if ("docTitle".Equals(tf._Name))
-            {
-                Console.WriteLine("Single Find: \"docTitle\"");
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("<text>");
-                for (int i = 0; i <= indent; i++) sw.Write('\t');
-                sw.WriteLine(this.textBoxTitle.Text);
-                for (int i = 0; i < indent; i++) sw.Write('\t');
-                sw.WriteLine("</text>");
-            }
-            else if ("guide".Equals(tf._Name))
-            {
-                Console.WriteLine("Single Find: \"guide\"");
 
-                foreach (var ti in tf._Children)
+            var detail_names = new string[max_index];
+            var indices = new int[max_index]; // Starts 0
+
+            switch (max_index)
+            {
+                case 1:
+                    detail_names[0] = "Chapter ";
+                    break;
+                case 2:
+                    detail_names[0] = "Part ";
+                    detail_names[1] = "Chapter ";
+                    break;
+                default:
+                    throw new Exception("OH NO!");
+            }
+
+            tab_index = 0;
+            int index = 0;
+
+            foreach (var mfn in this._ItemTextHandler.EnumerateContent())
+            {
+                if (mfn.Checked && (mfn._NavigationType != ManifestFileNavigation.NavigationType.None))
                 {
-                    if (ti is TagFile)
+                    String name = null;
+
+                    switch (mfn._NavigationType)
                     {
-                        var np = ti as TagFile;
-                        String href = null;
-                        if (np._Params.TryGetValue("href", out href))
+                        case ManifestFileNavigation.NavigationType.Custom:
+                            name = mfn._NavigationName;
+                            break;
+                        case ManifestFileNavigation.NavigationType.Default:
+                            indices[tab_index]++;
+                            name = detail_names[tab_index] + indices[tab_index];
+                            break;
+                        default:
+                            throw new Exception("OH NO!");
+                    }
+
+                    index++;
+                    tab_index += 1;
+
+                    IndentWrite(sw, indent + tab_index, "<navPoint class=\"other\" id=\"navpoint-" + index + "\" playOrder=\"" + index + "\">");
+                    IndentWrite(sw, indent + tab_index + 1, "<navLabel>");
+                    IndentWrite(sw, indent + tab_index + 2, "<text>" + name + "</text>");
+                    IndentWrite(sw, indent + tab_index + 1, "</navLabel>");
+                    IndentWrite(sw, indent + tab_index + 1, "<content src=\"" + mfn._StringPath + "\"/>");
+
+                    for (int i = 0; i < mfn._NavigationPointCloses; i++)
+                    {
+                        IndentWrite(sw, indent + tab_index, "</navPoint>");
+                        tab_index -= 1;
+                    }
+                }
+            }
+
+            for (; tab_index > 0; tab_index--)
+                IndentWrite(sw, indent + tab_index, "</navPoint>");
+            
+            /*
+            int play_order = 1;
+            foreach (var ti in tf._Children)
+            {
+                if (ti is TagFile)
+                {
+                    var np = ti as TagFile;
+                    if ("navPoint".Equals(np._Name))
+                        this.saveNavPoint(np, ref play_order, sw, indent);
+
+                    else Console.WriteLine("Error: navMap has something besides navPoint");
+                }
+                else Console.WriteLine("Error: navMap has TagText");
+            }
+            */
+        }
+
+        private void SaveTitle(TagFile tf, System.IO.StreamWriter sw, int indent)
+        {
+            IndentWrite(sw, indent, "<text>");
+            IndentWrite(sw, indent + 1, this.textBoxTitle.Text);
+            IndentWrite(sw, indent, "</text>");
+        }
+
+        private void SaveGuide(TagFile tf, System.IO.StreamWriter sw, int indent)
+        {
+            foreach (var ti in tf._Children)
+            {
+                if (ti is TagFile)
+                {
+                    var np = ti as TagFile;
+                    String href = null;
+                    if (np._Params.TryGetValue("href", out href))
+                    {
+                        foreach (var mfn in this._ItemTextHandler.EnumerateContent())
                         {
-                            foreach (var mfn in this._ItemTextHandler.EnumerateContent())
+                            if (mfn.Checked)
                             {
-                                if (mfn.Checked)
+                                if (String.Equals(mfn._StringPath, href))
                                 {
-                                    if (String.Equals(mfn._StringPath, href))
-                                    {
-                                        this.saveXML(np, sw, indent);
-                                        break;
-                                    }
+                                    this.SaveContentToXML(np, sw, indent);
+                                    break;
                                 }
                             }
                         }
                     }
                 }
             }
-            else foreach (var ch in tf._Children) this.saveXML(ch, sw, indent);
         }
+
+
+
+
+
+
 
         public void saveNavPoint(TagFile np, ref int play_order, StreamWriter sw, int indent)
         {
@@ -892,9 +974,9 @@ namespace Ebook
                     {
                         var tf_c = ti_c as TagFile;
                         if ("navPoint".Equals(tf_c._Name)) this.saveNavPoint(tf_c, ref play_order, sw, indent + 1);
-                        else this.saveXML(ti_c, sw, indent + 1);
+                        else this.SaveContentToXML(ti_c, sw, indent + 1);
                     }
-                    else this.saveXML(ti_c, sw, indent + 1);
+                    else this.SaveContentToXML(ti_c, sw, indent + 1);
                 }
                 for (int i = 0; i < indent; i++) sw.Write('\t'); sw.WriteLine(b);
             }
